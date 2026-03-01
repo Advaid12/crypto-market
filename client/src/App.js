@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
@@ -18,13 +18,18 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState("live");
 
-  // ================= FETCH COINS =================
+  // ================= API URL =================
+  const API_URL =
+    process.env.NODE_ENV === "development"
+      ? ""
+      : "https://crypto-market-production.up.railway.app";
 
-  const fetchCoins = async () => {
+  // ================= FETCH COINS =================
+  const fetchCoins = useCallback(async () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/coins");
+      const res = await fetch(`${API_URL}/api/coins`);
       if (!res.ok) throw new Error("API Error");
 
       const data = await res.json();
@@ -37,47 +42,33 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
+  // ================= INITIAL FETCH + POLLING =================
   useEffect(() => {
     fetchCoins();
-    const interval = setInterval(fetchCoins, 30000);
+    const interval = setInterval(fetchCoins, 60000); // 60 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchCoins]);
 
-  // ================= SAVE WATCHLIST IDS =================
-
+  // ================= SAVE WATCHLIST =================
   useEffect(() => {
     localStorage.setItem("watchlist", JSON.stringify(watchlistIds));
   }, [watchlistIds]);
 
   // ================= DERIVED WATCHLIST =================
-  // Always built from fresh coins data
-
   const watchlist = coins.filter((coin) =>
     watchlistIds.includes(coin.id)
   );
 
   // ================= TOGGLE WATCHLIST =================
-
   const toggleWatchlist = (coin) => {
-  setWatchlistIds((prev) => {
-    const updated = prev.includes(coin.id)
-      ? prev.filter((id) => id !== coin.id)
-      : [...prev, coin.id];
-
-    console.log("Updated watchlistIds:", updated); // DEBUG
-
-    return updated;
-  });
-};
-
-  // ================= AUTO HIDE ERROR =================
-
-  useEffect(() => {
-  console.log("Saving to localStorage:", watchlistIds);
-  localStorage.setItem("watchlist", JSON.stringify(watchlistIds));
-}, [watchlistIds]);
+    setWatchlistIds((prev) =>
+      prev.includes(coin.id)
+        ? prev.filter((id) => id !== coin.id)
+        : [...prev, coin.id]
+    );
+  };
 
   return (
     <Router>
