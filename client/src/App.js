@@ -1,27 +1,39 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
-import WatchlistSection from "./components/WatchlistSection";
-import MarketSection from "./components/MarketSection";
+import Market from "./pages/Market";
+import Portfolio from "./pages/Portfolio";
+import Exchange from "./pages/Exchange";
+
 import "./styles.css";
 
 function App() {
   const [coins, setCoins] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
+  const [watchlistIds, setWatchlistIds] = useState(() => {
+    return JSON.parse(localStorage.getItem("watchlist")) || [];
+  });
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [apiStatus, setApiStatus] = useState("live");
+
+  // ================= FETCH COINS =================
 
   const fetchCoins = async () => {
     try {
       setLoading(true);
+
       const res = await fetch("/api/coins");
       if (!res.ok) throw new Error("API Error");
 
       const data = await res.json();
       setCoins(data);
+      setApiStatus("live");
       setError("");
-    } catch {
-      setError("API Connection Warning");
+    } catch (err) {
+      setApiStatus("offline");
+      setError("⚠ API Connection Warning");
     } finally {
       setLoading(false);
     }
@@ -33,49 +45,81 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("watchlist");
-    if (saved) setWatchlist(JSON.parse(saved));
-  }, []);
+  // ================= SAVE WATCHLIST IDS =================
 
   useEffect(() => {
-    localStorage.setItem("watchlist", JSON.stringify(watchlist));
-  }, [watchlist]);
+    localStorage.setItem("watchlist", JSON.stringify(watchlistIds));
+  }, [watchlistIds]);
 
-  const toggleWatchlist = (coin) => {
-    setWatchlist((prev) => {
-      const exists = prev.find((item) => item.id === coin.id);
-      return exists
-        ? prev.filter((item) => item.id !== coin.id)
-        : [...prev, coin];
-    });
-  };
+  // ================= DERIVED WATCHLIST =================
+  // Always built from fresh coins data
 
-  const filteredCoins = coins.filter((coin) =>
-    coin.name.toLowerCase().includes(search.toLowerCase())
+  const watchlist = coins.filter((coin) =>
+    watchlistIds.includes(coin.id)
   );
 
+  // ================= TOGGLE WATCHLIST =================
+
+  const toggleWatchlist = (coin) => {
+  setWatchlistIds((prev) => {
+    const updated = prev.includes(coin.id)
+      ? prev.filter((id) => id !== coin.id)
+      : [...prev, coin.id];
+
+    console.log("Updated watchlistIds:", updated); // DEBUG
+
+    return updated;
+  });
+};
+
+  // ================= AUTO HIDE ERROR =================
+
+  useEffect(() => {
+  console.log("Saving to localStorage:", watchlistIds);
+  localStorage.setItem("watchlist", JSON.stringify(watchlistIds));
+}, [watchlistIds]);
+
   return (
-    <>
-      <Navbar search={search} setSearch={setSearch} />
+    <Router>
+      <Navbar
+        search={search}
+        setSearch={setSearch}
+        apiStatus={apiStatus}
+      />
 
       <div className="container">
-        {loading && <div className="loading">Loading market data...</div>}
+        {loading && (
+          <div className="loading">Loading market data...</div>
+        )}
 
-        <WatchlistSection
-          watchlist={watchlist}
-          toggleWatchlist={toggleWatchlist}
-        />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Market
+                coins={coins}
+                watchlist={watchlist}
+                toggleWatchlist={toggleWatchlist}
+                search={search}
+                setSearch={setSearch}
+              />
+            }
+          />
 
-        <MarketSection
-          coins={filteredCoins}
-          toggleWatchlist={toggleWatchlist}
-          watchlist={watchlist}
-        />
+          <Route
+            path="/portfolio"
+            element={<Portfolio watchlist={watchlist} />}
+          />
 
-        {error && <div className="toast">{error}</div>}
+          <Route
+            path="/exchange"
+            element={<Exchange coins={coins} />}
+          />
+        </Routes>
+
+        {error && <div className="popup-alert">{error}</div>}
       </div>
-    </>
+    </Router>
   );
 }
 

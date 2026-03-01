@@ -12,7 +12,6 @@ app.get("/api/coins", async (req, res) => {
   try {
     const now = Date.now();
 
-    // If last fetch was within 60 seconds, return cached data
     if (cachedData && now - lastFetchTime < 60000) {
       console.log("Serving from cache");
       return res.json(cachedData);
