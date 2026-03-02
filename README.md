@@ -1,8 +1,4 @@
 # crypto-market
-Here is your GitHub-style professional README template
-(copy-paste directly into README.md — no edits needed except live URLs).
-
-
 ---
 
 🚀 CryptoPulse – Crypto Market Overview
