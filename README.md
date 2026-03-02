@@ -13,17 +13,9 @@ Displays real-time crypto prices, watchlist management, portfolio tracking, and 
 
 🌍 Live Demo
 
-🔗 Frontend: https://your-frontend-url.vercel.app
-
-🔗 Backend API: https://crypto-market-production.up.railway.app
+🔗 Frontend: https://crypto-market-mauve-one.vercel.app/
 
 
-
----
-
-📸 Preview
-
-<!-- Optional: Add screenshot here --><!-- ![App Screenshot](./screenshot.png) -->
 ---
 
 ✨ Features
@@ -86,21 +78,27 @@ Railway (Backend)
 
 📂 Project Structure
 
+```bash
 crypto-market/
 │
 ├── client/                 # React Frontend
+│   ├── public/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── App.js
-│   │   └── styles.css
-│   └── package.json
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Route-based pages
+│   │   ├── App.js          # Main application logic
+│   │   ├── index.js        # Entry point
+│   │   └── styles.css      # Global styles
+│   ├── package.json
+│   └── package-lock.json
 │
 ├── server/                 # Express Backend
-│   ├── server.js
-│   └── package.json
+│   ├── server.js           # API server & routes
+│   ├── package.json
+│   └── package-lock.json
 │
 └── README.md
+```
 
 
 ---
